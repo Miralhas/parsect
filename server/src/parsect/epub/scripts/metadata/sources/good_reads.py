@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-import time
 from typing import ClassVar, Literal
 
 from selenium import webdriver
@@ -8,9 +7,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 
 from parsect.utils.json_manager import load_json
 from parsect.epub.scripts.metadata.sources.abstract_source import AbstractSource

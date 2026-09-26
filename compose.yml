@@ -1,0 +1,17 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: parsect-server
+    image: parsect-server:latest
+    ports:
+      - "2025:80"
+    networks:
+      - parsect-network
+    restart: unless-stopped
+
+
+networks:
+  parsect-network:
+    name: parsect-network

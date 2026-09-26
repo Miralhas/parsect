@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
+from ebooklib import epub, ITEM_DOCUMENT
 from ebooklib.epub import Link, Section
 from bs4 import BeautifulSoup
 import nh3

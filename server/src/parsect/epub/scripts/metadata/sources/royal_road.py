@@ -1,7 +1,6 @@
 import logging
 from typing import Literal
 
-from rich import print
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
