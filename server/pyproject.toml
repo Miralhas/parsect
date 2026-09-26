@@ -1,0 +1,26 @@
+[project]
+name = "parsect"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Miralhas", email = "victor2.miralhas@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "aiofiles>=25.1.0",
+    "bs4>=0.0.2",
+    "ebooklib>=0.20",
+    "fastapi[all]>=0.141.1",
+    "nh3>=0.3.7",
+    "selenium>=4.49.0",
+]
+
+[project.scripts]
+parsect = "parsect:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.fastapi]
+entrypoint = "src.parsect.main:app"
