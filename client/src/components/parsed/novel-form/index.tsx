@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import { useParserProvider, type PartialNovel } from "@/contexts/parser-context";
 import { NovelSchema, type NovelFormInput, type NovelInput } from "@/lib/schemas/novel-schema";
+import { isApiError } from "@/lib/utils/common-utils";
 import { useBookUploader } from "@/service/book/mutation/use-book-uploader";
 import { useCoverUploader } from "@/service/book/mutation/use-cover-uploader";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +42,7 @@ const NovelForm = () => {
   const { novel } = useParserProvider();
   const [showChapterBody, setShowChapterBody] = useState<number | undefined>();
   const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
+  const [tab, setTab] = useState<'metadata' | 'chapters'>('chapters');
   const coverMutation = useCoverUploader();
   const bookMutation = useBookUploader();
 
@@ -94,23 +97,50 @@ const NovelForm = () => {
     form.reset(toNovelFormInput(novel));
   }, [novel, form]);
 
+  const onError = (errors: typeof form.formState.errors) => {
+    const { chapters: chapterErrors, ...rest } = errors;
+    const hasChapterErrors = !!chapterErrors;
+    const hasErrors = !!Object.keys(rest).length;
+    if (hasChapterErrors && !hasErrors) setTab('chapters');
+  };
+
   const onSubmit = (input: NovelInput) => {
     bookMutation.mutate(input, {
-      onSuccess: () => {
+      onSuccess: (novel) => {
+        toast.add({
+          type: 'success',
+          title: "Book uploaded successfully!",
+          description: (
+            <a
+              href={`https://devilsect.com/novels/${novel.slug}`}
+              className="underline capitalize"
+              target="_blank"
+            >
+              {novel.title}
+            </a>
+          ),
+        });
         if (coverBlob) {
           const formData = new FormData();
           formData.append("file", coverBlob!, `${input.title}-cover.webp`);
-          coverMutation.mutate(formData)
+          coverMutation.mutate({ formData, slug: novel.slug }, {
+            onError: () => {
+              toast.add({
+                type: 'error',
+                title: "Failed to upload book cover!"
+              })
+            }
+          })
         }
       },
-      onError: (err) => console.log(err)
-    })
-    // coverMutation.mutate(formData, {
-    //   onSuccess: () => {
-    //     console.log('success')
-    //   },
-    //   onError: () => { console.log('error') }
-    // })
+      onError: (err) => {
+        toast.add({
+          type: 'error',
+          title: "Failed to upload book!",
+          description: isApiError(err) ? err.detail : err.message,
+        })
+      }
+    });
   }
 
   const handleShowChapterBody = (index: number | undefined) => {
@@ -118,9 +148,11 @@ const NovelForm = () => {
     setShowChapterBody(index);
   }
 
+  const isPending = bookMutation.isPending || coverMutation.isPending;
+
   return (
-    <form id="novel-form" className="w-full space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-      <Tabs defaultValue="chapters">
+    <form id="novel-form" className="w-full space-y-4" onSubmit={form.handleSubmit(onSubmit, onError)}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v)}>
         <TabsList className="w-full">
           <TabsTrigger value="metadata">Metadata</TabsTrigger>
           <TabsTrigger value="chapters">Chapters</TabsTrigger>
@@ -155,6 +187,7 @@ const NovelForm = () => {
                           aria-invalid={fieldState.invalid}
                           placeholder="Red Rising"
                           autoComplete="off"
+                          disabled={isPending}
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
@@ -179,6 +212,7 @@ const NovelForm = () => {
                             aria-invalid={fieldState.invalid}
                             placeholder="Red Rising Saga #1"
                             autoComplete="off"
+                            disabled={isPending}
                           />
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />
@@ -201,6 +235,7 @@ const NovelForm = () => {
                             aria-invalid={fieldState.invalid}
                             placeholder="Author"
                             autoComplete="off"
+                            disabled={isPending}
                           />
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />
@@ -226,6 +261,7 @@ const NovelForm = () => {
                       aria-invalid={fieldState.invalid}
                       placeholder="Book description - <p>...</p>"
                       rows={3}
+                      disabled={isPending}
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -234,8 +270,8 @@ const NovelForm = () => {
                 )}
               />
 
-              <FieldSet className="gap-">
-                <FieldLegend variant="label">Book genres</FieldLegend>
+              <FieldSet className="gap-1.25 m-0 p-0">
+                <FieldLegend data-invalid={Boolean(form.formState.errors.genres)} variant="label">Book genres</FieldLegend>
                 <FieldGroup className="gap-1">
                   {genresFieldArray.fields.map((field, index) => (
                     <Controller
@@ -256,6 +292,7 @@ const NovelForm = () => {
                                 placeholder="fantasy"
                                 type="text"
                                 autoComplete="off"
+                                disabled={isPending}
                               />
                               <Button
                                 variant="link"
@@ -284,10 +321,13 @@ const NovelForm = () => {
                     Add genre
                   </Button>
                 </FieldGroup>
+                {form.formState.errors.genres && (
+                  <FieldError errors={[form.formState.errors.genres]} />
+                )}
               </FieldSet>
 
-              <FieldSet className="gap-">
-                <FieldLegend variant="label">Book tags</FieldLegend>
+              <FieldSet className="gap-1.25 m-0 p-0">
+                <FieldLegend data-invalid={Boolean(form.formState.errors.tags)} variant="label">Book tags</FieldLegend>
                 <FieldGroup className="gap-1">
                   {tagsFieldArray.fields.map((field, index) => (
                     <Controller
@@ -308,6 +348,7 @@ const NovelForm = () => {
                                 placeholder="fantasy"
                                 type="text"
                                 autoComplete="off"
+                                disabled={isPending}
                               />
                               <Button
                                 variant="link"
@@ -336,8 +377,10 @@ const NovelForm = () => {
                     Add tag
                   </Button>
                 </FieldGroup>
+                {form.formState.errors.tags && (
+                  <FieldError errors={[form.formState.errors.tags]} />
+                )}
               </FieldSet>
-
             </FieldGroup>
           </FieldSet>
         </TabsContent>
@@ -368,6 +411,7 @@ const NovelForm = () => {
                                 placeholder="Add chapter title - Chapter X: Lorem"
                                 type="text"
                                 autoComplete="off"
+                                disabled={isPending}
                               />
                             </InputGroup>
                             {fieldState.invalid && (
@@ -418,6 +462,7 @@ const NovelForm = () => {
                                 aria-invalid={fieldState.invalid}
                                 placeholder="Add chapter body - <p>...</p>"
                                 rows={12}
+                                disabled={isPending}
                               />
                               {fieldState.invalid && (
                                 <FieldError errors={[fieldState.error]} />
@@ -449,6 +494,7 @@ const NovelForm = () => {
           variant="default"
           size="sm"
           form="novel-form"
+          disabled={bookMutation.isPending || coverMutation.isPending}
         >
           Submit
         </Button>

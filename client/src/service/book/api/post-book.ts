@@ -1,8 +1,9 @@
 import type { NovelInput } from "@/lib/schemas/novel-schema";
 import { ApiError } from "@/service/api-error";
 import type { ApiResponseError } from "@/types/api";
+import type { NovelSummary } from "@/types/novel";
 
-export const postBook = async (input: NovelInput): Promise<void> => {
+export const postBook = async (input: NovelInput): Promise<NovelSummary> => {
   const url = `${import.meta.env.VITE_PARSECT_URL}/book`;
 
   const myHeaders = new Headers();
@@ -21,5 +22,5 @@ export const postBook = async (input: NovelInput): Promise<void> => {
     throw new ApiError(data);
   }
 
-  return res.json() as Promise<void>;
+  return res.json() as Promise<NovelSummary>;
 }
