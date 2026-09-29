@@ -1,0 +1,1 @@
+export const STATUSES = ["ON_GOING", "COMPLETED"] as const;
