@@ -12,6 +12,7 @@ dependencies = [
     "ebooklib>=0.20",
     "fastapi[all]>=0.141.1",
     "nh3>=0.3.7",
+    "requests>=2.34.2",
     "selenium>=4.49.0",
 ]
 

@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, UploadFile, Depends
 
 from parsect.epub.services.parser import parser
+from parsect.utils.file_manager import save_file
 from parsect.epub.schemas.metadata import MetadataRequest
 from parsect.epub.dependencies import valid_file_media_type
 
@@ -14,7 +16,7 @@ async def parse_epub(file: UploadFile = Depends(valid_file_media_type)):
     return chapters
 
 
-@router.get("/epub/metadata/{source}/{source_id:path}")
+@router.post("/epub/metadata/{source}/{source_id:path}")
 async def metadata_epub(request: Annotated[MetadataRequest, Depends()],):
     source = request.get_source()
     metadata = source.extract_metadata()

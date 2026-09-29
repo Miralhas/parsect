@@ -61,7 +61,7 @@ class GoodReadsSource(AbstractSource):
 
             check_not_found(driver, self.source_id)
 
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(driver, 3)
 
             try:
                 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.Overlay__close")))
@@ -74,20 +74,21 @@ class GoodReadsSource(AbstractSource):
             image_src = image_fallback.get_attribute("src")
             image_b64 = image_fallback.screenshot_as_base64
 
+            alias = None
             try:
                 show_all_genres_btn = driver.find_element(By.CSS_SELECTOR, "div.BookPageMetadataSection__genres div.Button__container button")
                 show_all_genres_btn.click()
 
-                wait.until(
-                    EC.presence_of_all_elements_located(
-                        (By.CSS_SELECTOR, "span.BookPageMetadataSection__genreButton a span")
-                    )
-                )
-
-                genres_container = driver.find_elements(By.CSS_SELECTOR, "span.BookPageMetadataSection__genreButton a span")
-                genres_and_tags = [genre.text.strip().lower() for genre in genres_container]
+                # wait.until(
+                #     EC.presence_of_all_elements_located(
+                #         (By.CSS_SELECTOR, "span.BookPageMetadataSection__genreButton a span")
+                #     )
+                # )
             except:
                 pass
+
+            genres_container = driver.find_elements(By.CSS_SELECTOR, "span.BookPageMetadataSection__genreButton a span")
+            genres_and_tags = [genre.text.strip().lower() for genre in genres_container]
 
             title = driver.find_element(By.CSS_SELECTOR, "div.BookPageTitleSection__title h1").text
             author = driver.find_element(By.CSS_SELECTOR, "span.ContributorLink__name").text
@@ -97,7 +98,7 @@ class GoodReadsSource(AbstractSource):
             try:
                 alias = driver.find_element(By.CSS_SELECTOR, "div.BookPageTitleSection__title h3").text
             except NoSuchElementException as e:
-                logging.warning(f"Failed to get book alias: {e}")
+                pass
 
             try:
                 driver.get(image_src)

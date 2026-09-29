@@ -42,7 +42,7 @@ class RoyalRoadSource(AbstractSource):
             image_fallback = driver.find_element(By.XPATH, '/html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div/img')
             image_b64 = image_fallback.screenshot_as_base64
 
-            raw_description = driver.find_element(By.CSS_SELECTOR, "div.hidden-content").get_attribute("innerHTML").strip()
+            raw_description = driver.find_element(By.CSS_SELECTOR, "div.description").get_attribute("innerHTML").strip()
             description = self.clean_html(raw_description)
 
             raw_status = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/div/div[1]/div/div[2]/div/div[2]/div[1]/div[2]/div[1]/span[2]").text.strip()
