@@ -6,12 +6,13 @@ from fastapi import APIRouter, UploadFile, Depends
 from parsect.epub.services.parser import parser
 from parsect.utils.file_manager import save_file
 from parsect.epub.schemas.metadata import MetadataRequest
-from parsect.epub.dependencies import valid_file_media_type
+from parsect.epub.dependencies import valid_epub_media_type
 
 router = APIRouter()
 
 @router.post("/epub/parse")
-async def parse_epub(file: UploadFile = Depends(valid_file_media_type)):
+async def parse_epub(file: UploadFile = Depends(valid_epub_media_type)):
+    print(file)
     chapters = await parser(file)
     return chapters
 

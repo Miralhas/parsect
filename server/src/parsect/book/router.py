@@ -1,18 +1,20 @@
-from pathlib import Path
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, UploadFile
-from parsect.utils.file_manager import save_file
-from parsect.book.schemas.book import BookRequest
+from parsect.book.schemas import Book
+from parsect.book import service
+from parsect.book.dependencies import valid_image_media_type
 
 router = APIRouter()
 
 @router.post("/book")
-async def metadata_epub(book: BookRequest):
-    return "book"
+async def post_book(book: Book):
+    res = service.upload_book(book)
+    return res
 
-@router.post("/book/cover")
-async def metadata_epub(file: UploadFile):
-    output = Path(f'./imgs/{file.filename}')
-    await save_file(file, output)
-    return file
+
+@router.post("/book/{slug}/cover")
+async def post_book(
+    slug: str,
+    file: UploadFile = Depends(valid_image_media_type),
+):
+    res = await service.upload_cover(file, slug)
+    return res

@@ -11,7 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from parsect.utils.json_manager import load_json
 from parsect.epub.scripts.metadata.sources.abstract_source import AbstractSource
 from parsect.epub.scripts.metadata.sources.constants import GENRES 
-from parsect.epub.exceptions import MetadataException
+from parsect.exceptions.metadata_exception import MetadataException
 from parsect.epub.scripts.metadata.utils import check_not_found
 
 
