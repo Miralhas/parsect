@@ -23,8 +23,18 @@ import { useBookUploader } from "@/service/book/mutation/use-book-uploader";
 import { useCoverUploader } from "@/service/book/mutation/use-cover-uploader";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, ImageIcon, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
+
+const initialMetadata: Omit<NovelInput, "chapters"> = {
+  title: "",
+  alias: "",
+  author: "",
+  status: "COMPLETED",
+  description: "",
+  genres: [],
+  tags: [],
+}
 
 const toNovelFormInput = (novel?: PartialNovel): NovelFormInput => ({
   title: novel?.title ?? "",
@@ -92,10 +102,35 @@ const NovelForm = () => {
     setCoverBlob(blob);
   };
 
+  const resetChapters = useCallback(() => {
+    if (!novel) return;
+    form.setValue("chapters", novel.chapters as NovelInput["chapters"]);
+  }, [form, novel]);
+
+  const resetMetadata = useCallback(() => {
+    if (!novel) return;
+      const chapters = form.getValues('chapters') as NovelInput["chapters"]
+      form.reset(toNovelFormInput({
+        ...initialMetadata,
+        chapters: chapters
+      }));
+
+  }, [form, novel])
+
+  const updateMetadata = useCallback(() => {
+    if (!novel) return;
+    const chapters = form.getValues('chapters') as NovelInput["chapters"]
+    form.reset(toNovelFormInput({
+      ...novel,
+      chapters: chapters
+    }));
+  }, [form, novel])
+
   useEffect(() => {
     if (!novel) return;
-    form.reset(toNovelFormInput(novel));
-  }, [novel, form]);
+    updateMetadata()
+  }, [novel, updateMetadata]);
+
 
   const onError = (errors: typeof form.formState.errors) => {
     const { chapters: chapterErrors, ...rest } = errors;
@@ -502,9 +537,9 @@ const NovelForm = () => {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => form.reset(toNovelFormInput({ chapters: novel?.chapters }))}
+          onClick={tab === "chapters" ? resetChapters : resetMetadata}
         >
-          Reset
+          Reset <span className="capitalize">{tab}</span>
         </Button>
       </Field>
     </form>
