@@ -5,6 +5,10 @@ services:
       dockerfile: Dockerfile
     container_name: parsect-server
     image: parsect-server:latest
+    environment:
+      - STALKERS_URL=${STALKERS_URL}
+      - ROBOT_HEADER=${ROBOT_HEADER}
+      - ROBOT_SECRET=${ROBOT_SECRET}
     ports:
       - "2025:80"
     networks:
