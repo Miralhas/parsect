@@ -30,7 +30,7 @@ const MetadataForm = () => {
     resolver: zodResolver(MetadataSchema),
     defaultValues: {
       source: "GOODREADS",
-      sourceId: "15839976-red-rising",
+      sourceId: "",
     },
   });
 

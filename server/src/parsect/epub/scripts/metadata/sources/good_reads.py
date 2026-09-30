@@ -79,11 +79,11 @@ class GoodReadsSource(AbstractSource):
                 show_all_genres_btn = driver.find_element(By.CSS_SELECTOR, "div.BookPageMetadataSection__genres div.Button__container button")
                 show_all_genres_btn.click()
 
-                # wait.until(
-                #     EC.presence_of_all_elements_located(
-                #         (By.CSS_SELECTOR, "span.BookPageMetadataSection__genreButton a span")
-                #     )
-                # )
+                wait.until(
+                    EC.presence_of_all_elements_located(
+                        (By.CSS_SELECTOR, "span.BookPageMetadataSection__genreButton a span")
+                    )
+                )
             except:
                 pass
 
@@ -127,7 +127,7 @@ class GoodReadsSource(AbstractSource):
             raise MeX
         except Exception as e:
             logging.error(f"Failed to process metadata: {e}")
-            raise MetadataException(detail=f"Failed to process metadata: {e}")
+            raise MetadataException(message=f"Failed to process metadata: {e}")
         finally:
             logging.info("Finished metadata extraction...")
             driver.quit()

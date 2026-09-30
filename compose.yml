@@ -11,6 +11,19 @@ services:
       - parsect-network
     restart: unless-stopped
 
+  client:
+    container_name: parsect-client
+    image: parsect-client:latest
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    environment:
+      - VITE_PARSECT_URL=http://server:80
+    ports:
+      - 4173:4173
+    networks:
+      - parsect-network
+    restart: unless-stopped
 
 networks:
   parsect-network:
