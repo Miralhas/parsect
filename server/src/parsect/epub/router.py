@@ -12,7 +12,6 @@ router = APIRouter()
 
 @router.post("/epub/parse")
 async def parse_epub(file: UploadFile = Depends(valid_epub_media_type)):
-    print(file)
     chapters = await parser(file)
     return chapters
 
