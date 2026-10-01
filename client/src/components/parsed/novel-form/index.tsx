@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import { useParserProvider, type PartialNovel } from "@/contexts/parser-context";
+import { useMultiSelect } from "@/hooks/use-multi-select";
 import { NovelSchema, type NovelFormInput, type NovelInput } from "@/lib/schemas/novel-schema";
 import { isApiError } from "@/lib/utils/common-utils";
 import { useBookUploader } from "@/service/book/mutation/use-book-uploader";
@@ -47,7 +48,6 @@ const toNovelFormInput = (novel?: PartialNovel): NovelFormInput => ({
   chapters: novel?.chapters ?? [],
 });
 
-
 const NovelForm = () => {
   const { novel } = useParserProvider();
   const [showChapterBody, setShowChapterBody] = useState<number | undefined>();
@@ -65,6 +65,9 @@ const NovelForm = () => {
     control: form.control,
     name: "chapters",
   });
+
+  const rows = Array.from({ length: fields.length }, (_, i) => i);
+  const { handleMultiSelect, setSelected, selected } = useMultiSelect({ rows });
 
   const genresFieldArray = useFieldArray({
     control: form.control,
@@ -109,11 +112,11 @@ const NovelForm = () => {
 
   const resetMetadata = useCallback(() => {
     if (!novel) return;
-      const chapters = form.getValues('chapters') as NovelInput["chapters"]
-      form.reset(toNovelFormInput({
-        ...initialMetadata,
-        chapters: chapters
-      }));
+    const chapters = form.getValues('chapters') as NovelInput["chapters"]
+    form.reset(toNovelFormInput({
+      ...initialMetadata,
+      chapters: chapters
+    }));
 
   }, [form, novel])
 
@@ -181,6 +184,25 @@ const NovelForm = () => {
   const handleShowChapterBody = (index: number | undefined) => {
     if (index === showChapterBody) return setShowChapterBody(undefined);
     setShowChapterBody(index);
+  }
+
+  // const handleSelect = (to: number, e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+  //   const from = Array.from(selectedChapters).pop() ?? 0;
+  //   // @ts-expect-error shiftKey is defined for click events
+  //   if (e.nativeEvent.shiftKey) {
+  //     const rows = Array.from({ length: fields.length }, (_, i) => i);
+  //     const rowsToToggle = [...getRowRange(rows, to, from).filter(c => !selectedChapters.includes(c)), from];
+  //     setSelectedChapters(rowsToToggle);
+  //     return;
+  //   }
+  //   const isChecked = selectedChapters.some(c => c === to);
+  //   setSelectedChapters(prev => isChecked ? [...prev.filter(c => c !== to)] : [...prev, to]);
+  // };
+
+  const handleMultiRemove = () => {
+    remove(selected);
+    setSelected([]);
+    handleShowChapterBody(undefined)
   }
 
   const isPending = bookMutation.isPending || coverMutation.isPending;
@@ -427,7 +449,17 @@ const NovelForm = () => {
           <FieldSet className="gap-4">
             <FieldGroup className="gap-0">
               {fields.map((field, index) => (
-                <div key={field.id}>
+                <div key={field.id} className="grid grid-cols-[30px_1fr] gap-1.5">
+                  <Field orientation="horizontal" className="mb-2">
+                    <input
+                      type="checkbox"
+                      id="terms-checkbox"
+                      className="w-full h-8 accent-primary"
+                      name="terms-checkbox"
+                      checked={selected.some(c => c === index)}
+                      onChange={(e) => handleMultiSelect(index, e)}
+                    />
+                  </Field>
                   <div className="space-y-2 relative flex gap-2">
                     <Controller
                       name={`chapters.${index}.title`}
@@ -472,7 +504,7 @@ const NovelForm = () => {
                           variant="link"
                           type="button"
                           className="text-muted-foreground group p-0 m-0"
-                          onClick={() => { remove(index); handleShowChapterBody(undefined) }}
+                          onClick={() => handleMultiRemove()}
                           aria-label={`Remove chapter ${index + 1}`}
                         >
                           <XIcon className="group-hover:text-red-800/90" />
@@ -481,7 +513,7 @@ const NovelForm = () => {
                     )}
                   </div>
                   {showChapterBody === index && (
-                    <div className="w-full mb-2">
+                    <div className="w-full mb-2 col-span-full">
                       <Controller
                         name={`chapters.${index}.body`}
                         control={form.control}
