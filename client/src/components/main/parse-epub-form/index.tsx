@@ -42,7 +42,6 @@ const ParseEpubForm = () => {
         });
       },
       onError: (err) => {
-        console.log(err)
         const description = isApiError(err) ? err.detail : err.message;
         handleParsed(undefined);
         toast.add({ 

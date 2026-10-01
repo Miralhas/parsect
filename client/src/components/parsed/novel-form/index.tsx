@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldContent,
@@ -17,11 +18,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import { useParserProvider, type PartialNovel } from "@/contexts/parser-context";
-import { useMultiSelect } from "@/hooks/use-multi-select";
+import { useRHFMultiSelect } from "@/hooks/use-rhf-multi-select";
 import { NovelSchema, type NovelFormInput, type NovelInput } from "@/lib/schemas/novel-schema";
 import { isApiError } from "@/lib/utils/common-utils";
 import { useBookUploader } from "@/service/book/mutation/use-book-uploader";
 import { useCoverUploader } from "@/service/book/mutation/use-cover-uploader";
+import type { NovelSummary } from "@/types/novel";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, ImageIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -58,7 +60,7 @@ const NovelForm = () => {
 
   const form = useForm<NovelFormInput, unknown, NovelInput>({
     resolver: zodResolver(NovelSchema),
-    defaultValues: toNovelFormInput(novel)
+    defaultValues: toNovelFormInput(novel),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -66,8 +68,7 @@ const NovelForm = () => {
     name: "chapters",
   });
 
-  const rows = Array.from({ length: fields.length }, (_, i) => i);
-  const { handleMultiSelect, setSelected, selected } = useMultiSelect({ rows });
+  const { handleMultiSelect, setSelectedFields, selectedFields } = useRHFMultiSelect({ fields });
 
   const genresFieldArray = useFieldArray({
     control: form.control,
@@ -112,7 +113,7 @@ const NovelForm = () => {
 
   const resetMetadata = useCallback(() => {
     if (!novel) return;
-    const chapters = form.getValues('chapters') as NovelInput["chapters"]
+    const chapters = form.getValues('chapters') as NovelInput["chapters"];
     form.reset(toNovelFormInput({
       ...initialMetadata,
       chapters: chapters
@@ -122,7 +123,7 @@ const NovelForm = () => {
 
   const updateMetadata = useCallback(() => {
     if (!novel) return;
-    const chapters = form.getValues('chapters') as NovelInput["chapters"]
+    const chapters = form.getValues('chapters') as NovelInput["chapters"];
     form.reset(toNovelFormInput({
       ...novel,
       chapters: chapters
@@ -142,67 +143,67 @@ const NovelForm = () => {
     if (hasChapterErrors && !hasErrors) setTab('chapters');
   };
 
-  const onSubmit = (input: NovelInput) => {
-    bookMutation.mutate(input, {
-      onSuccess: (novel) => {
-        toast.add({
-          type: 'success',
-          title: "Book uploaded successfully!",
-          description: (
-            <a
-              href={`https://devilsect.com/novels/${novel.slug}`}
-              className="underline capitalize"
-              target="_blank"
-            >
-              {novel.title}
-            </a>
-          ),
-        });
-        if (coverBlob) {
-          const formData = new FormData();
-          formData.append("file", coverBlob!, `${input.title}-cover.webp`);
-          coverMutation.mutate({ formData, slug: novel.slug }, {
-            onError: () => {
-              toast.add({
-                type: 'error',
-                title: "Failed to upload book cover!"
-              })
-            }
+  const onSuccess = (novel: NovelSummary) => {
+    toast.add({
+      type: 'success',
+      title: "Book uploaded successfully!",
+      description: (
+        <a
+          href={`https://devilsect.com/novels/${novel.slug}`}
+          className="underline capitalize"
+          target="_blank"
+        >
+          {novel.title}
+        </a>
+      ),
+    });
+    if (coverBlob) {
+      const formData = new FormData();
+      formData.append("file", coverBlob!, `${novel.slug}-cover.webp`);
+      coverMutation.mutate({ formData, slug: novel.slug }, {
+        onError: () => {
+          toast.add({
+            type: 'error',
+            title: "Failed to upload book cover!"
           })
         }
-      },
-      onError: (err) => {
+      })
+    }
+  }
+
+  const onSubmit = (input: NovelInput) => {
+    bookMutation.mutate(input, {
+      onSuccess,
+      onError: (error) => {
+        if (isApiError(error) && error.errors) {
+          Object.entries(error.errors).map(([key, value]) => {
+            form.setError(
+              key as keyof NovelFormInput,
+              {
+                type: error.status.toString(),
+                message: value,
+              });
+          });
+        }
         toast.add({
           type: 'error',
           title: "Failed to upload book!",
-          description: isApiError(err) ? err.detail : err.message,
+          description: isApiError(error) ? error.detail : error.message,
         })
+
       }
     });
   }
 
-  const handleShowChapterBody = (index: number | undefined) => {
+  const handleShowChapterBody = useCallback((index: number | undefined) => {
     if (index === showChapterBody) return setShowChapterBody(undefined);
     setShowChapterBody(index);
-  }
-
-  // const handleSelect = (to: number, e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-  //   const from = Array.from(selectedChapters).pop() ?? 0;
-  //   // @ts-expect-error shiftKey is defined for click events
-  //   if (e.nativeEvent.shiftKey) {
-  //     const rows = Array.from({ length: fields.length }, (_, i) => i);
-  //     const rowsToToggle = [...getRowRange(rows, to, from).filter(c => !selectedChapters.includes(c)), from];
-  //     setSelectedChapters(rowsToToggle);
-  //     return;
-  //   }
-  //   const isChecked = selectedChapters.some(c => c === to);
-  //   setSelectedChapters(prev => isChecked ? [...prev.filter(c => c !== to)] : [...prev, to]);
-  // };
+  }, [showChapterBody])
 
   const handleMultiRemove = () => {
-    remove(selected);
-    setSelected([]);
-    handleShowChapterBody(undefined)
+    remove(selectedFields.map(s => fields.findIndex(i => i.id === s.id)));
+    setSelectedFields([]);
+    handleShowChapterBody(undefined);
   }
 
   const isPending = bookMutation.isPending || coverMutation.isPending;
@@ -215,7 +216,7 @@ const NovelForm = () => {
           <TabsTrigger value="chapters">Chapters</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="metadata">
+        <TabsContent value="metadata" className="relative">
           <FieldSet className="gap-4">
             <FieldGroup className="gap-4">
               <div className="grid grid-cols-[0.1fr_1fr] gap-2">
@@ -442,7 +443,7 @@ const NovelForm = () => {
           </FieldSet>
         </TabsContent>
 
-        <TabsContent value="chapters">
+        <TabsContent value="chapters" className="relative">
           {form.formState.errors.chapters?.root && (
             <FieldError errors={[form.formState.errors.chapters.root]} />
           )}
@@ -451,13 +452,12 @@ const NovelForm = () => {
               {fields.map((field, index) => (
                 <div key={field.id} className="grid grid-cols-[30px_1fr] gap-1.5">
                   <Field orientation="horizontal" className="mb-2">
-                    <input
-                      type="checkbox"
-                      id="terms-checkbox"
-                      className="w-full h-8 accent-primary"
-                      name="terms-checkbox"
-                      checked={selected.some(c => c === index)}
-                      onChange={(e) => handleMultiSelect(index, e)}
+                    <Checkbox
+                      checked={selectedFields.some(item => item.id === field.id)}
+                      className="h-8 w-full border dark:data-checked:border-primary/60 dark:data-checked:bg-primary/30!"
+                      onClick={event => {
+                        handleMultiSelect(field, event.shiftKey);
+                      }}
                     />
                   </Field>
                   <div className="space-y-2 relative flex gap-2">
@@ -477,6 +477,7 @@ const NovelForm = () => {
                                 aria-invalid={fieldState.invalid}
                                 placeholder="Add chapter title - Chapter X: Lorem"
                                 type="text"
+                                value={controllerField.value ?? ''}
                                 autoComplete="off"
                                 disabled={isPending}
                               />

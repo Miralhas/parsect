@@ -17,7 +17,8 @@ export const NovelSchema = z.object({
     .string()
     .min(1, {
       error: "Title must be at least 1 character long"
-    }),
+    })
+    ,
   status: z
     .enum(STATUSES),
   description: z
@@ -41,7 +42,7 @@ export const NovelSchema = z.object({
   ...value,
   tags: value.tags.map(t => t.name),
   genres: value.genres.map(g => g.name),
-  chapters: value.chapters.map((c, i) => ({ ...c, number: i + 1 }))
+  chapters: value.chapters.map((c, i) => ({ ...c, number: i + 1 })),
 }));
 
 export type NovelFormInput = z.input<typeof NovelSchema>;
