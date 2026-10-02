@@ -55,6 +55,7 @@ const NovelForm = () => {
   const [showChapterBody, setShowChapterBody] = useState<number | undefined>();
   const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
   const [tab, setTab] = useState<'metadata' | 'chapters'>('chapters');
+  const [appendAlias, setAppendAlias] = useState<boolean>(false);
   const coverMutation = useCoverUploader();
   const bookMutation = useBookUploader();
 
@@ -66,9 +67,14 @@ const NovelForm = () => {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "chapters",
+
   });
 
-  const { handleMultiSelect, setSelectedFields, selectedFields } = useRHFMultiSelect({ fields });
+  const {
+    handleMultiSelect,
+    setSelectedFields,
+    selectedFields,
+  } = useRHFMultiSelect({ fields });
 
   const genresFieldArray = useFieldArray({
     control: form.control,
@@ -128,19 +134,26 @@ const NovelForm = () => {
       ...novel,
       chapters: chapters
     }));
+    setAppendAlias(false);
   }, [form, novel])
 
   useEffect(() => {
     if (!novel) return;
-    updateMetadata()
+    // eslint-disable-next-line
+    updateMetadata();
   }, [novel, updateMetadata]);
 
+  useEffect(() => {
+    if (!novel) return;
+    fields.filter(f => !f.title).forEach(f => handleMultiSelect(f, false));
+  }, [fields]);
 
   const onError = (errors: typeof form.formState.errors) => {
     const { chapters: chapterErrors, ...rest } = errors;
     const hasChapterErrors = !!chapterErrors;
     const hasErrors = !!Object.keys(rest).length;
-    if (hasChapterErrors && !hasErrors) setTab('chapters');
+    if (hasChapterErrors && !hasErrors) return setTab('chapters');
+    setTab('metadata')
   };
 
   const onSuccess = (novel: NovelSummary) => {
@@ -206,6 +219,16 @@ const NovelForm = () => {
     handleShowChapterBody(undefined);
   }
 
+  const handleAppendAlias = (shouldAppend: boolean) => {
+    if (!novel) return;
+    setAppendAlias(shouldAppend);
+    const { alias } = form.getValues();
+    form.setValue('title', `${novel.title}`)
+    if (shouldAppend && alias) {
+      form.setValue('title', `${novel.title}: ${alias}`)
+    }
+  }
+
   const isPending = bookMutation.isPending || coverMutation.isPending;
 
   return (
@@ -236,9 +259,21 @@ const NovelForm = () => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid} className="gap-1">
-                        <FieldLabel htmlFor="novel-form-title">
-                          Book title
-                        </FieldLabel>
+                        <div className="flex justify-between">
+                          <FieldLabel htmlFor="novel-form-title">
+                            Book title
+                          </FieldLabel>
+                          <div className="flex mb-0.25 gap-2 text-muted-foreground items-center">
+                            <FieldLabel htmlFor="append-alias" className="text-xs relative top-0.25">
+                              Append alias to title
+                            </FieldLabel>
+                            <Checkbox
+                              id="append-alias"
+                              checked={appendAlias}
+                              onCheckedChange={(b) => handleAppendAlias(b)}
+                            />
+                          </div>
+                        </div>
                         <Input
                           {...field}
                           id="novel-form-title"
@@ -475,16 +510,13 @@ const NovelForm = () => {
                                 {...controllerField}
                                 id={`novel-form-title-${index}`}
                                 aria-invalid={fieldState.invalid}
-                                placeholder="Add chapter title - Chapter X: Lorem"
+                                placeholder="Chapter title"
                                 type="text"
                                 value={controllerField.value ?? ''}
                                 autoComplete="off"
                                 disabled={isPending}
                               />
                             </InputGroup>
-                            {fieldState.invalid && (
-                              <FieldError errors={[fieldState.error]} />
-                            )}
                           </FieldContent>
                         </Field>
                       )}

@@ -6,7 +6,7 @@ const Parsed = () => {
   const { novel, handleParsed } = useParserProvider();
 
   return (
-    <section className="flex flex-col p-6 mt-14 items-center gap-4 max-w-4xl mx-auto">
+    <section className="flex flex-col p-6 md:mt-14 items-center gap-4 max-w-4xl mx-auto">
       <div className="flex w-full min-w-0 flex-col gap-4 text-sm leading-loose">
         <div className="text-center">
           <h1

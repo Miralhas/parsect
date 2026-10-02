@@ -86,7 +86,7 @@ class RoyalRoadSource(AbstractSource):
                 pass
             
             metadata.update({
-                "title": title.lower().strip(),
+                "title": title.strip(),
                 "author": author.strip(),
                 "status": status,
                 "description": description,
