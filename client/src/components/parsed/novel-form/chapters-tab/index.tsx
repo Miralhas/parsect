@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useRHFMultiSelect } from "@/hooks/use-rhf-multi-select";
 import { type NovelFormInput, type NovelInput } from "@/lib/schemas/novel-schema";
-import { EyeIcon, XIcon } from "lucide-react";
+import { CheckIcon, EyeIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
@@ -27,7 +27,7 @@ type Props = {
 const ChaptersTabForm = ({ form, isPending }: Props) => {
   const [showChapterBody, setShowChapterBody] = useState<number | undefined>();
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "chapters",
   });
@@ -37,6 +37,8 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
     setSelectedFields,
     selectedFields,
   } = useRHFMultiSelect({ fields });
+
+  const hasSelectedFields = !!selectedFields.length;
 
   useEffect(() => {
     setSelectedFields(fields.filter(f => !f.title));
@@ -54,12 +56,31 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
     handleShowChapterBody(undefined);
   }
 
+  const handleGenericTitle = () => {
+    replace(fields.map((f, i) => ({ ...f, title: `Chapter ${i + 1}` })));
+  }
+
+  const handleToggleAll = () => {
+    return setSelectedFields(hasSelectedFields ? [] : fields);
+  }
+
   return (
     <>
       {form.formState.errors.chapters?.root && (
         <FieldError errors={[form.formState.errors.chapters.root]} />
       )}
-      <FieldSet className="gap-4">
+      <FieldSet className="gap-2">
+        <div className="w-full flex items-center">
+          <Checkbox
+            checked={hasSelectedFields}
+            className='h-8 w-[30px] border dark:data-checked:border-primary/60 dark:data-checked:bg-primary/30!'
+            onCheckedChange={handleToggleAll}
+            disabled={!fields.length}
+          >
+            <CheckIcon className="text-foreground/80" />
+          </Checkbox>
+          <Button variant='outline' className='ml-auto' onClick={handleGenericTitle}>Generic title</Button>
+        </div>
         <FieldGroup className="gap-0">
           {fields.map((field, index) => (
             <div key={field.id} className="grid grid-cols-[30px_1fr] gap-1.5">

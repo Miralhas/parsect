@@ -21,7 +21,7 @@ import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useFieldArray, type UseFormReturn } from "react-hook-form";
 import { toDefault } from "..";
-import NovelImage from "../novel-image";
+import NovelImage from "./novel-image";
 
 type Props = {
   form: UseFormReturn<NovelFormInput, unknown, NovelInput>;
