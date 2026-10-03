@@ -3,7 +3,7 @@ import MetadataForm from "./metadata-form";
 import NovelForm from "./novel-form";
 
 const Parsed = () => {
-  const { novel, handleParsed } = useParserProvider();
+  const { handleChapters, isParsed, chapters } = useParserProvider();
 
   return (
     <section className="flex flex-col p-6 md:mt-14 items-center gap-4 max-w-4xl mx-auto">
@@ -11,15 +11,15 @@ const Parsed = () => {
         <div className="text-center">
           <h1
             className="font-bold text-3xl text-primary cursor-pointer"
-            onClick={() => handleParsed(undefined)}
+            onClick={() => handleChapters(undefined)}
           >
             Parsect
           </h1>
-          <p>Number of chapters: <span className="underline font-bold">{novel?.chapters?.length ?? 0}</span></p>
+          <p>Number of chapters: <span className="underline font-bold">{chapters?.length ?? 0}</span></p>
         </div>
         <MetadataForm />
       </div>
-      {novel && <NovelForm />}
+      {isParsed && <NovelForm />}
     </section>
   )
 }

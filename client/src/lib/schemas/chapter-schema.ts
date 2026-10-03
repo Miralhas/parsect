@@ -6,4 +6,9 @@ export const ChapterSchema = z.object({
   number: z.coerce.number().optional(),
 });
 
+export const ChapterArraySchema = z.array(ChapterSchema)
+  .min(1, { error: "Must have at least one chapter" }).
+  transform(value => value.map((c, i) => ({ ...c, number: i + 1 })))
+
+export type ChapterList = z.infer<typeof ChapterArraySchema>;
 export type ChapterInput = z.infer<typeof ChapterSchema>;

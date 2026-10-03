@@ -3,9 +3,9 @@ import Parsed from "./components/parsed";
 import { useParserProvider } from "./contexts/parser-context";
 
 export function App() {
-  const { novel } = useParserProvider();
+  const { isParsed } = useParserProvider();
 
-  if (novel) return <Parsed />;
+  if (isParsed) return <Parsed />;
 
   return <MainPage />
 }

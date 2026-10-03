@@ -7,7 +7,7 @@ export type Metadata = {
   author: string;
   status: BookStatus;
   description: string;
-  alias?: string;
+  alias: string | undefined;
   tags: string[];
   genres: string[];
   image_b64: string;

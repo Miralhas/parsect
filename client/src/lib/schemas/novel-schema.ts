@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { STATUSES } from "../utils/constants";
-import { ChapterSchema } from "./chapter-schema";
+import { ChapterArraySchema } from "./chapter-schema";
 
 export const NovelSchema = z.object({
   title: z
@@ -17,8 +17,7 @@ export const NovelSchema = z.object({
     .string()
     .min(1, {
       error: "Title must be at least 1 character long"
-    })
-    ,
+    }),
   status: z
     .enum(STATUSES),
   description: z
@@ -36,13 +35,11 @@ export const NovelSchema = z.object({
     .min(1, {
       error: "Must have at leat 1 genre",
     }),
-  chapters: z.array(ChapterSchema)
-    .min(1, { error: "Must have at least one chapter" })
+  chapters: ChapterArraySchema,
 }).transform(value => ({
   ...value,
   tags: value.tags.map(t => t.name),
   genres: value.genres.map(g => g.name),
-  chapters: value.chapters.map((c, i) => ({ ...c, number: i + 1 })),
 }));
 
 export type NovelFormInput = z.input<typeof NovelSchema>;

@@ -1,31 +1,45 @@
 'use client'
 
+import type { ChapterList } from "@/lib/schemas/chapter-schema";
+import type { Metadata } from "@/types/metadata";
 import { type PropsWithChildren, useState } from "react";
 import { createContext } from "./create-context";
-import type { NovelInput } from "@/lib/schemas/novel-schema";
-
-export type PartialNovel = Partial<NovelInput> & { image_b64?: string }; 
 
 type ParsedState = {
-  novel?: PartialNovel;
+  metadata?: Metadata;
+  chapters?: ChapterList;
+  isParsed: boolean;
 }
 
 type ParsedAction = {
-  handleParsed: (novel?: Partial<NovelInput>) => void;
+  handleMetadata: (metadata?: Metadata) => void;
+  handleChapters: (novel?: ChapterList) => void;
 }
 
 const { ContextProvider, useContext } = createContext<ParsedState & ParsedAction>();
 
 export const ParserProvider = ({ children }: PropsWithChildren) => {
-  const [novel, setNovel] = useState<Partial<NovelInput> | undefined>();
+  const [metadata, setMetadata] = useState<Metadata | undefined>();
+  const [chapters, setChapters] = useState<ChapterList | undefined>();
 
-  const handleParsed = (novel?: PartialNovel) => {
-    if (!novel) return setNovel(undefined);
-    setNovel(prev => ({ ...prev, ...novel }))
+  const isParsed = !!chapters;
+
+  const handleChapters = (chapters?: ChapterList) => {
+    setChapters(chapters);
+  }
+
+  const handleMetadata = (metadata?: Metadata) => {
+    setMetadata(metadata);
   }
 
   return (
-    <ContextProvider value={{ novel, handleParsed }}>
+    <ContextProvider value={{
+      isParsed,
+      metadata,
+      chapters,
+      handleMetadata,
+      handleChapters,
+    }}>
       {children}
     </ContextProvider>
   )

@@ -24,7 +24,7 @@ import { Controller, useForm } from "react-hook-form";
 
 const MetadataForm = () => {
   const mutation = useMetadataExtractor();
-  const { handleParsed } = useParserProvider();
+  const { handleMetadata } = useParserProvider();
 
   const form = useForm<MetadataInput>({
     resolver: zodResolver(MetadataSchema),
@@ -37,10 +37,7 @@ const MetadataForm = () => {
   const onSubmit = (input: MetadataInput) => {
     mutation.mutate(input, {
       onSuccess: (metadata) => {
-        handleParsed(({
-          alias: "",
-          ...metadata,
-        }));
+        handleMetadata(metadata);
         toast.add({
           type: "success",
           title: "Metadata extracted successfully"

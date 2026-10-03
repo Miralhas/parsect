@@ -10,7 +10,7 @@ import { useState } from "react";
 const ParseEpubForm = () => {
   const [file, setFile] = useState<File | null>(null);
   const mutation = useParseEpub();
-  const { handleParsed } = useParserProvider();
+  const { handleChapters } = useParserProvider();
 
   const validateFile = (): File | undefined => {
     const result = ParseEpubSchema.safeParse({ file });
@@ -35,7 +35,7 @@ const ParseEpubForm = () => {
     
     mutation.mutate(formData, {
       onSuccess: (chapters) => {
-        handleParsed({ chapters });
+        handleChapters(chapters);
         toast.add({
           type: "success",
           title: "Epub parsed successfully"
@@ -43,7 +43,7 @@ const ParseEpubForm = () => {
       },
       onError: (err) => {
         const description = isApiError(err) ? err.detail : err.message;
-        handleParsed(undefined);
+        handleChapters(undefined);
         toast.add({ 
           type: "error",
           priority: "high",
@@ -58,7 +58,7 @@ const ParseEpubForm = () => {
     <div>
       <Dropzone 
         onFileSelected={setFile}
-        onRemove={() => handleParsed(undefined)}
+        onRemove={() => handleChapters(undefined)}
         accept="application/epub+zip"
         disabled={mutation.isPending}
       />
