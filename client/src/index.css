@@ -170,7 +170,7 @@ blockquote p {
   margin: 6px 0px;
 }
 
-table {
+.chapter-body table {
     width: 100%;
     border-collapse: collapse;
     background: #212121;
@@ -178,11 +178,11 @@ table {
     border: 1px solid #aeb0b0;
 }
 
-table col:first-child {
+.chapter-body table col:first-child {
     width: 140px;
 }
 
-table td {
+.chapter-body table td {
     border: 1px solid #aeb0b0;
     padding: 11px 13px;
     height: 44px;
@@ -190,20 +190,19 @@ table td {
     vertical-align: middle;
 }
 
-table td:first-child {
+.chapter-body table td:first-child {
     width: 140px;
     white-space: nowrap;
 }
 
-table td:nth-child(2) {
+.chapter-body table td:nth-child(2) {
     padding-left: 13px;
 }
 
-/* Attributes paragraphs */
-table td p {
+.chapter-body table td p {
     margin: 0 0 10px;
 }
 
-table td p:last-child {
+.chapter-body table td p:last-child {
     margin-bottom: 0;
 }
