@@ -13,20 +13,10 @@ import { useCoverUploader } from "@/service/book/mutation/use-cover-uploader";
 import type { Metadata } from "@/types/metadata";
 import type { NovelSummary } from "@/types/novel";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import ChaptersTabForm from "./chapters-tab";
 import MetadataTabForm from "./metadata-tab";
-
-const initialMetadata: Omit<NovelInput, "chapters"> = {
-  title: "",
-  alias: "",
-  author: "",
-  status: "COMPLETED",
-  description: "",
-  genres: [],
-  tags: [],
-}
 
 // eslint-disable-next-line
 export const toDefault = (
@@ -60,18 +50,7 @@ const NovelForm = () => {
   const handleBlob = (blob: Blob | null) => {
     setCoverBlob(blob);
   }
-
-  const resetChapters = useCallback(() => {
-    if (!chapters) return;
-    form.setValue("chapters", chapters);
-  }, [form, chapters]);
-
-  const resetMetadata = useCallback(() => {
-    if (!metadata) return;
-    const chapters = form.getValues('chapters') as NovelInput["chapters"];
-    form.reset(toDefault(chapters, initialMetadata));
-
-  }, [form, metadata])
+  
 
   const onError = (errors: typeof form.formState.errors) => {
     const { chapters: chapterErrors, ...rest } = errors;
@@ -86,6 +65,7 @@ const NovelForm = () => {
       type: 'success',
       title: "Book uploaded successfully!",
       description: <SuccessDescription novel={novel} />,
+      timeout: 0,
     });
     if (coverBlob) {
       const formData = new FormData();
@@ -131,7 +111,7 @@ const NovelForm = () => {
   const isPending = bookMutation.isPending || coverMutation.isPending;
 
   return (
-    <form id="novel-form" className="w-full space-y-4" onSubmit={form.handleSubmit(onSubmit, onError)}>
+    <form id="novel-form" className="w-full space-y-2" onSubmit={form.handleSubmit(onSubmit, onError)}>
       <Tabs value={tab} onValueChange={(v) => setTab(v)}>
         <TabsList className="w-full">
           <TabsTrigger value="metadata">Metadata</TabsTrigger>
@@ -148,11 +128,11 @@ const NovelForm = () => {
         </TabsContent>
 
         <TabsContent value="chapters" className="relative">
-          <ChaptersTabForm form={form} isPending={isPending} />
+          <ChaptersTabForm form={form} isPending={isPending} chapters={chapters!} />
         </TabsContent>
       </Tabs>
 
-      <Field className="grid grid-cols-2">
+      <Field className="grid">
         <Button
           type="submit"
           variant="default"
@@ -162,14 +142,14 @@ const NovelForm = () => {
         >
           Submit
         </Button>
-        <Button
+        {/* <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={tab === "chapters" ? resetChapters : resetMetadata}
         >
           Reset <span className="capitalize">{tab}</span>
-        </Button>
+        </Button> */}
       </Field>
     </form>
   )

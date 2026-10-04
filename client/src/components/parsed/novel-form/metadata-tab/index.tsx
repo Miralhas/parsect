@@ -30,8 +30,23 @@ type Props = {
   metadata?: Metadata
 }
 
+const initialMetadata: Omit<NovelInput, "chapters"> = {
+  title: "",
+  alias: "",
+  author: "",
+  status: "COMPLETED",
+  description: "",
+  genres: [],
+  tags: [],
+}
+
 const MetadataTabForm = ({ form, isPending, metadata, handleBlob }: Props) => {
   const [appendAlias, setAppendAlias] = useState<boolean>(false);
+
+  const resetMetadata = () => {
+    const chapters = form.getValues('chapters') as NovelInput["chapters"];
+    form.reset(toDefault(chapters, initialMetadata));
+  };
 
   const genresFieldArray = useFieldArray({
     control: form.control,
@@ -238,7 +253,7 @@ const MetadataTabForm = ({ form, isPending, metadata, handleBlob }: Props) => {
           )}
         </FieldSet>
 
-        <FieldSet className="gap-1.25 m-0 p-0">
+        <FieldSet className="gap-2 m-0 p-0">
           <FieldLegend data-invalid={Boolean(form.formState.errors.tags)} variant="label">Book tags</FieldLegend>
           <FieldGroup className="gap-1">
             {tagsFieldArray.fields.map((field, index) => (
@@ -292,6 +307,9 @@ const MetadataTabForm = ({ form, isPending, metadata, handleBlob }: Props) => {
           {form.formState.errors.tags && (
             <FieldError errors={[form.formState.errors.tags]} />
           )}
+          <div className="grid mt-4">
+            <Button variant='outline' onClick={resetMetadata}>Reset Metadata</Button>
+          </div>
         </FieldSet>
       </FieldGroup>
     </FieldSet>

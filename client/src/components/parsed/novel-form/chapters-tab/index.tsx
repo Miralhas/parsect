@@ -4,7 +4,6 @@ import {
   Field,
   FieldContent,
   FieldError,
-  FieldGroup,
   FieldSet
 } from "@/components/ui/field";
 import {
@@ -13,21 +12,27 @@ import {
 } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useRHFMultiSelect } from "@/hooks/use-rhf-multi-select";
+import type { ChapterList } from "@/lib/schemas/chapter-schema";
 import { type NovelFormInput, type NovelInput } from "@/lib/schemas/novel-schema";
-import { CheckIcon, EyeIcon, XIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { cn } from "cn";
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, StickyNoteIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
+import ChaptersConfig from "./config";
+import PreviewDialog from "./preview-dialog";
 
 type Props = {
   form: UseFormReturn<NovelFormInput, unknown, NovelInput>;
   isPending: boolean;
+  chapters: ChapterList;
 }
 
-const ChaptersTabForm = ({ form, isPending }: Props) => {
+const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
   const [showChapterBody, setShowChapterBody] = useState<number | undefined>();
+  const [openConfig, setOpenConfig] = useState<boolean>(false);
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove, replace, update, move } = useFieldArray({
     control: form.control,
     name: "chapters",
   });
@@ -36,18 +41,21 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
     handleMultiSelect,
     setSelectedFields,
     selectedFields,
-  } = useRHFMultiSelect({ fields });
+  } = useRHFMultiSelect<NovelFormInput, 'chapters'>({ fields });
 
   const hasSelectedFields = !!selectedFields.length;
 
-  useEffect(() => {
+  const handleSelectEmptyTitles = () => {
     setSelectedFields(fields.filter(f => !f.title));
-  }, [fields, setSelectedFields]);
+  }
 
-  const handleShowChapterBody = useCallback((index: number | undefined) => {
-    if (index === showChapterBody) return setShowChapterBody(undefined);
-    setShowChapterBody(index);
-  }, [showChapterBody]);
+  useEffect(() => {
+    handleSelectEmptyTitles()
+  }, []);
+
+  const handleShowChapterBody = (index: number | undefined) => {
+    setShowChapterBody(index === showChapterBody ? undefined : index);
+  };
 
   const handleRemove = (index: number) => {
     const ids = new Set([...selectedFields.map(s => fields.findIndex(i => i.id === s.id)), index]);
@@ -56,12 +64,23 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
     handleShowChapterBody(undefined);
   }
 
-  const handleGenericTitle = () => {
-    replace(fields.map((f, i) => ({ ...f, title: `Chapter ${i + 1}` })));
-  }
-
   const handleToggleAll = () => {
     return setSelectedFields(hasSelectedFields ? [] : fields);
+  }
+
+  const handleMoveUp = (index: number) => {
+    if (index <= 0) return move(index, fields.length - 1);
+    move(index, index - 1);
+  }
+
+  const handleMoveDown = (index: number) => {
+    if (index >= fields.length - 1) return move(index, 0);;
+    move(index, index + 1);
+  }
+
+  const handleReset = () => {
+    form.setValue("chapters", chapters);
+    setSelectedFields([]);
   }
 
   return (
@@ -70,21 +89,46 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
         <FieldError errors={[form.formState.errors.chapters.root]} />
       )}
       <FieldSet className="gap-2">
-        <div className="w-full flex items-center">
-          <Checkbox
-            checked={hasSelectedFields}
-            className='h-8 w-[30px] border dark:data-checked:border-primary/60 dark:data-checked:bg-primary/30!'
-            onCheckedChange={handleToggleAll}
-            disabled={!fields.length}
-          >
-            <CheckIcon className="text-foreground/80" />
-          </Checkbox>
-          <Button variant='outline' className='ml-auto' onClick={handleGenericTitle}>Generic title</Button>
+        <div className="w-full grid grid-cols-[30px_1fr] gap-1.5">
+          {openConfig ? (
+            <div className="col-span-full">
+              <ChaptersConfig
+                form={form}
+                fields={fields}
+                handleClose={() => setOpenConfig(false)}
+                handleToggleAll={handleToggleAll}
+                replace={replace}
+                update={update}
+                setSelectedFields={setSelectedFields}
+                chapters={chapters}
+                handleSelectEmptyTitles={handleSelectEmptyTitles}
+                selectedFields={selectedFields}
+              />
+            </div>
+          ) : (
+            <>
+              <Checkbox
+                checked={hasSelectedFields}
+                className={cn('h-8 w-[30px] border dark:data-checked:border-primary/60 dark:data-checked:bg-primary/30! mt-auto')}
+                onCheckedChange={handleToggleAll}
+                disabled={!fields.length}
+              >
+                <CheckIcon className="text-foreground/80" />
+              </Checkbox>
+              <Button
+                variant='outline'
+                className={cn('justify-self-end', openConfig && 'row-start-1 col-span-full')}
+                onClick={() => setOpenConfig(prev => !prev)}
+              >
+                Config
+              </Button>
+            </>
+          )}
         </div>
-        <FieldGroup className="gap-0">
+        <div className="gap-0">
           {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-[30px_1fr] gap-1.5">
-              <Field orientation="horizontal" className="mb-2">
+            <div key={field.id} className="grid grid-cols-[30px_1fr_15px] gap-1.5">
+              <Field orientation="horizontal" className="mb-2 col-span-1">
                 <Checkbox
                   checked={selectedFields.some(item => item.id === field.id)}
                   className="h-8 w-full border dark:data-checked:border-primary/60 dark:data-checked:bg-primary/30!"
@@ -93,7 +137,7 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
                   }}
                 />
               </Field>
-              <div className="space-y-2 relative flex gap-2">
+              <div className="col-span-1 space-y-2 relative flex gap-2">
                 <Controller
                   name={`chapters.${index}.title`}
                   control={form.control}
@@ -129,7 +173,7 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
                       onClick={() => handleShowChapterBody(index)}
                       aria-label={`Remove chapter ${index + 1}`}
                     >
-                      <EyeIcon className="group-hover:text-red-800/90" />
+                      <StickyNoteIcon className="group-hover:text-red-800/90 size-3.5" />
                     </Button>
                     <Button
                       variant="link"
@@ -143,6 +187,10 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
                   </div>
                 )}
               </div>
+              <div className="col-span-1 gap-0.25 text-foreground/80 justify-self-end flex flex-col">
+                <ArrowUpIcon className="size-3.5 cursor-pointer" onClick={() => handleMoveUp(index)} />
+                <ArrowDownIcon className="size-3.5 cursor-pointer" onClick={() => handleMoveDown(index)} />
+              </div>
               {showChapterBody === index && (
                 <div className="w-full mb-2 col-span-full">
                   <Controller
@@ -153,7 +201,7 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
                         orientation="horizontal"
                         data-invalid={fieldState.invalid}
                       >
-                        <FieldContent>
+                        <FieldContent className="relative">
                           <Textarea
                             {...controllerField}
                             id={`novel-form-body-${index}`}
@@ -161,7 +209,9 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
                             placeholder="Add chapter body - <p>...</p>"
                             rows={12}
                             disabled={isPending}
+                            className="pr-4"
                           />
+                          <PreviewDialog body={field.body} title={field.title} />
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />
                           )}
@@ -173,16 +223,27 @@ const ChaptersTabForm = ({ form, isPending }: Props) => {
               )}
             </div>
           ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => append({ title: "", body: "", number: fields.length + 1 })}
-          >
-            Add Chapter
-          </Button>
-        </FieldGroup>
+          <div className="grid grid-cols-2 gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => append({ title: "", body: "", number: fields.length + 1 })}
+            >
+              Add Chapter
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+            >
+              Reset Chapters
+            </Button>
+          </div>
+        </div>
       </FieldSet>
+
     </>
   )
 }

@@ -58,7 +58,7 @@ export const useRHFMultiSelect = <
           }
         }
 
-        return [...fields.filter(item => selectedIds.has(item.id)), anchorField];
+        return [anchorField, ...fields.filter(item => selectedIds.has(item.id))];
       });
 
       return;
