@@ -15,12 +15,15 @@ import { useRHFMultiSelect } from "@/hooks/use-rhf-multi-select";
 import type { ChapterList } from "@/lib/schemas/chapter-schema";
 import { type NovelFormInput, type NovelInput } from "@/lib/schemas/novel-schema";
 import { cn } from "cn";
-import { ArrowDownIcon, ArrowUpIcon, CheckIcon, StickyNoteIcon, XIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, EyeIcon, StickyNoteIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import ChaptersConfig from "./config";
 import PreviewDialog from "./preview-dialog";
+import MobileChapterMenu from "./mobile-chapter-menu";
+import { DialogTrigger } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Props = {
   form: UseFormReturn<NovelFormInput, unknown, NovelInput>;
@@ -31,8 +34,9 @@ type Props = {
 const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
   const [showChapterBody, setShowChapterBody] = useState<number | undefined>();
   const [openConfig, setOpenConfig] = useState<boolean>(false);
+  const isMobile = useIsMobile();
 
-  const { fields, append, remove, replace, update, move } = useFieldArray({
+  const { fields, append, remove, replace, update, move, swap } = useFieldArray({
     control: form.control,
     name: "chapters",
   });
@@ -74,7 +78,7 @@ const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
   }
 
   const handleMoveDown = (index: number) => {
-    if (index >= fields.length - 1) return move(index, 0);;
+    if (index >= fields.length - 1) return move(index, 0);
     move(index, index + 1);
   }
 
@@ -94,6 +98,7 @@ const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
             <div className="col-span-full">
               <ChaptersConfig
                 form={form}
+                swap={swap}
                 fields={fields}
                 handleClose={() => setOpenConfig(false)}
                 handleToggleAll={handleToggleAll}
@@ -154,6 +159,7 @@ const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
                             aria-invalid={fieldState.invalid}
                             placeholder="Chapter title"
                             type="text"
+                            className="text-[10px] md:text-xs"
                             value={controllerField.value ?? ''}
                             autoComplete="off"
                             disabled={isPending}
@@ -164,7 +170,7 @@ const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
                   )}
                 />
 
-                {fields.length > 1 && (
+                {!isMobile && (
                   <div className="flex gap-2 absolute top-0 right-2">
                     <Button
                       variant="link"
@@ -187,11 +193,24 @@ const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
                   </div>
                 )}
               </div>
-              <div className="col-span-1 gap-0.25 text-foreground/80 justify-self-end flex flex-col">
-                <ArrowUpIcon className="size-3.5 cursor-pointer" onClick={() => handleMoveUp(index)} />
-                <ArrowDownIcon className="size-3.5 cursor-pointer" onClick={() => handleMoveDown(index)} />
+              <div className="col-span-1 gap-0.25 text-foreground/80 justify-self-end flex flex-col justify-center">
+                {isMobile ? (
+                  <MobileChapterMenu
+                    handleMoveDown={handleMoveDown}
+                    handleMoveUp={handleMoveUp}
+                    field={field}
+                    control={form.control}
+                    index={index}
+                    handleRemove={handleRemove}
+                  />
+                ) : (
+                  <>
+                    <ArrowUpIcon className="size-3.5 cursor-pointer" onClick={() => handleMoveUp(index)} />
+                    <ArrowDownIcon className="size-3.5 cursor-pointer" onClick={() => handleMoveDown(index)} />
+                  </>
+                )}
               </div>
-              {showChapterBody === index && (
+              {!isMobile && showChapterBody === index && (
                 <div className="w-full mb-2 col-span-full">
                   <Controller
                     name={`chapters.${index}.body`}
@@ -211,7 +230,11 @@ const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
                             disabled={isPending}
                             className="pr-4"
                           />
-                          <PreviewDialog body={field.body} title={field.title} />
+                          <PreviewDialog body={form.getValues(`chapters.${index}.body`)} title={field.title}>
+                            <DialogTrigger render={<Button size="none" variant="pure" className="absolute top-1.25 right-1.5" />} >
+                              <EyeIcon className="size-3.5 text-foreground/70" />
+                            </DialogTrigger>
+                          </PreviewDialog>
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />
                           )}

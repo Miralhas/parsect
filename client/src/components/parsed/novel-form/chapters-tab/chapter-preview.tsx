@@ -9,7 +9,6 @@ const ChapterPreview = ({ chapter }: { chapter: Omit<Chapter, "number"> }) => {
         className="chapter-body translate max-w-none text-sm scroll-mt-[100px] max-h-[300px] overflow-y-auto text-pretty text-shadow-none px-3 space-y-4"
         style={{
           wordWrap: "break-word",
-          // fontSize: 19,
           lineHeight: `25px`,
           color: "#e0e0e0",
           opacity: 100,

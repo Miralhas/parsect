@@ -1,20 +1,18 @@
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { EyeIcon } from "lucide-react";
+  DialogContent
+} from "@/components/ui/dialog";
+import { useState, type PropsWithChildren } from "react";
 import ChapterPreview from "./chapter-preview";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const PreviewDialog = ({ title, body }: { title: string, body: string }) => {
+const PreviewDialog = ({ title, body, children }: PropsWithChildren<{ title: string, body: string }>) => {
+  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   return (
-    <Dialog>
-      <DialogTrigger>
-        <Button size="none" variant="pure" className="absolute top-1.25 right-1.5">
-          <EyeIcon className="size-3.5 text-foreground/70" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+      {children}
+      {open && isMobile && <div className="fixed inset-0 isolate bg-black/75 z-99" />}
       <DialogContent className="sm:max-w-lg">
         <ChapterPreview chapter={{ title, body }} />
       </DialogContent>
