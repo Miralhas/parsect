@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useParserProvider } from "@/contexts/parser-context";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import type { ChapterList } from "@/lib/schemas/chapter-schema";
+import { type ChapterList } from "@/lib/schemas/chapter-schema";
 import type { NovelFormInput, NovelInput } from "@/lib/schemas/novel-schema";
 import { XIcon } from "lucide-react";
 import { useState, type Dispatch, type SetStateAction } from "react";
@@ -73,7 +73,7 @@ const ChaptersConfig = ({
   const { copyToClipboard, isCopied } = useCopyToClipboard({ timeout: 2000 })
 
   const handleReset = () => {
-    form.setValue("chapters", chapters);
+    replace(chapters);
     setSelectedFields([]);
   }
 
@@ -108,10 +108,8 @@ const ChaptersConfig = ({
 
   const handleCopy = () => {
     const isAll = copyChapters === 'all';
-    const chapters = (isAll
-      ? form.getValues('chapters')
-      : selectedFields
-    ).map((c, i) => ({ number: i + 1, ...c }));
+    const chapters = (isAll ? form.getValues('chapters') : selectedFields)
+      .map(({ body, title }, i) => ({ number: i + 1, title, body }));
     copyToClipboard(JSON.stringify(chapters));
   }
 
@@ -121,7 +119,9 @@ const ChaptersConfig = ({
       { ...f, idx: fields.findIndex(fi => fi.id === f.id) }
     )).toSorted((a, b) => a.idx - b.idx);
     const mergedBody = selectedWithIndex.reduce((body, f) => body.concat(f.body), '');
-    form.setValue(`chapters.${selectedWithIndex[0].idx}.body`, mergedBody);
+    const root = selectedWithIndex[0];
+    update(root.idx, { ...root, body: mergedBody });
+    setSelectedFields([]);
   }
 
   return (

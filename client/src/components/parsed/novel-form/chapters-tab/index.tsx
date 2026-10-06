@@ -93,43 +93,40 @@ const ChaptersTabForm = ({ form, isPending, chapters }: Props) => {
         <FieldError errors={[form.formState.errors.chapters.root]} />
       )}
       <FieldSet className="gap-2">
-        <div className="w-full grid grid-cols-[30px_1fr] gap-1.5">
-          {openConfig ? (
-            <div className="col-span-full">
-              <ChaptersConfig
-                form={form}
-                swap={swap}
-                fields={fields}
-                handleClose={() => setOpenConfig(false)}
-                handleToggleAll={handleToggleAll}
-                replace={replace}
-                update={update}
-                setSelectedFields={setSelectedFields}
-                chapters={chapters}
-                handleSelectEmptyTitles={handleSelectEmptyTitles}
-                selectedFields={selectedFields}
-              />
-            </div>
-          ) : (
-            <>
-              <Checkbox
-                checked={hasSelectedFields}
-                className={cn('h-8 w-[30px] border dark:data-checked:border-primary/60 dark:data-checked:bg-primary/30! mt-auto')}
-                onCheckedChange={handleToggleAll}
-                disabled={!fields.length}
-              >
-                <CheckIcon className="text-foreground/80" />
-              </Checkbox>
-              <Button
-                variant='outline'
-                className={cn('justify-self-end', openConfig && 'row-start-1 col-span-full')}
-                onClick={() => setOpenConfig(prev => !prev)}
-              >
-                Config
-              </Button>
-            </>
-          )}
-        </div>
+        {openConfig ? (
+          <ChaptersConfig
+            form={form}
+            swap={swap}
+            fields={fields}
+            handleClose={() => setOpenConfig(false)}
+            handleToggleAll={handleToggleAll}
+            replace={replace}
+            update={update}
+            setSelectedFields={setSelectedFields}
+            chapters={chapters}
+            handleSelectEmptyTitles={handleSelectEmptyTitles}
+            selectedFields={selectedFields}
+          />
+        ) : (
+          <div className="w-full flex justify-between gap-1.5 items-center">
+            <Checkbox
+              checked={hasSelectedFields}
+              className={cn('h-8 w-[30px] border dark:data-checked:border-primary/60 dark:data-checked:bg-primary/30! mt-auto')}
+              onCheckedChange={handleToggleAll}
+              disabled={!fields.length}
+            >
+              <CheckIcon className="text-foreground/80" />
+            </Checkbox>
+            <p className="text-foreground/90 ml-6 md:ml-12">Number of chapters: <span className="underline font-bold">{fields.length}</span></p>
+            <Button
+              variant='outline'
+              className={cn('justify-self-end', openConfig && 'row-start-1 col-span-full')}
+              onClick={() => setOpenConfig(prev => !prev)}
+            >
+              Config
+            </Button>
+          </div>
+        )}
         <div className="gap-0">
           {fields.map((field, index) => (
             <div key={field.id} className="grid grid-cols-[30px_1fr_15px] gap-1.5">
