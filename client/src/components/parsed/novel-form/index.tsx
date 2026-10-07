@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import ChaptersTabForm from "./chapters-tab";
 import MetadataTabForm from "./metadata-tab";
+import ReaderTab from "./reader-tab";
 
 // eslint-disable-next-line
 export const toDefault = (
@@ -38,7 +39,7 @@ export const toDefault = (
 const NovelForm = () => {
   const { chapters, metadata } = useParserProvider();
   const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
-  const [tab, setTab] = useState<'metadata' | 'chapters'>('chapters');
+  const [tab, setTab] = useState<'metadata' | 'chapters' | 'reader'>('chapters');
   const coverMutation = useCoverUploader();
   const bookMutation = useBookUploader();
 
@@ -50,7 +51,6 @@ const NovelForm = () => {
   const handleBlob = (blob: Blob | null) => {
     setCoverBlob(blob);
   }
-  
 
   const onError = (errors: typeof form.formState.errors) => {
     const { chapters: chapterErrors, ...rest } = errors;
@@ -111,47 +111,46 @@ const NovelForm = () => {
   const isPending = bookMutation.isPending || coverMutation.isPending;
 
   return (
-    <form id="novel-form" className="w-full space-y-2" onSubmit={form.handleSubmit(onSubmit, onError)}>
+    <div className="w-full space-y-2">
       <Tabs value={tab} onValueChange={(v) => setTab(v)}>
         <TabsList className="w-full">
           <TabsTrigger value="metadata">Metadata</TabsTrigger>
           <TabsTrigger value="chapters">Chapters</TabsTrigger>
+          <TabsTrigger value="reader">Reader</TabsTrigger>
         </TabsList>
+        {tab !== "reader" && (
+          <form id="novel-form" className="w-full space-y-2" onSubmit={form.handleSubmit(onSubmit, onError)}>
+            <TabsContent value="metadata" className="relative">
+              <MetadataTabForm
+                form={form}
+                metadata={metadata}
+                handleBlob={handleBlob}
+                isPending={isPending}
+              />
+            </TabsContent>
 
-        <TabsContent value="metadata" className="relative">
-          <MetadataTabForm
-            form={form}
-            metadata={metadata}
-            handleBlob={handleBlob}
-            isPending={isPending}
-          />
-        </TabsContent>
+            <TabsContent value="chapters" className="relative">
+              <ChaptersTabForm form={form} isPending={isPending} chapters={chapters!} />
+            </TabsContent>
 
-        <TabsContent value="chapters" className="relative">
-          <ChaptersTabForm form={form} isPending={isPending} chapters={chapters!} />
+            <Field className="grid">
+              <Button
+                type="submit"
+                variant="default"
+                size="sm"
+                form="novel-form"
+                disabled={bookMutation.isPending || coverMutation.isPending}
+              >
+                Submit
+              </Button>
+            </Field>
+          </form>
+        )}
+        <TabsContent value="reader" className="relative">
+          <ReaderTab />
         </TabsContent>
       </Tabs>
-
-      <Field className="grid">
-        <Button
-          type="submit"
-          variant="default"
-          size="sm"
-          form="novel-form"
-          disabled={bookMutation.isPending || coverMutation.isPending}
-        >
-          Submit
-        </Button>
-        {/* <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={tab === "chapters" ? resetChapters : resetMetadata}
-        >
-          Reset <span className="capitalize">{tab}</span>
-        </Button> */}
-      </Field>
-    </form>
+    </div>
   )
 }
 

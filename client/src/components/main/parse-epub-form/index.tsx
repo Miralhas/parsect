@@ -10,7 +10,7 @@ import { useState } from "react";
 const ParseEpubForm = () => {
   const [file, setFile] = useState<File | null>(null);
   const mutation = useParseEpub();
-  const { handleChapters } = useParserProvider();
+  const { handleChapters, handleEpubBuffer } = useParserProvider();
 
   const validateFile = (): File | undefined => {
     const result = ParseEpubSchema.safeParse({ file });
@@ -34,8 +34,9 @@ const ParseEpubForm = () => {
     formData.append("file", epub, epub.name);
     
     mutation.mutate(formData, {
-      onSuccess: (chapters) => {
+      onSuccess: async (chapters) => {
         handleChapters(chapters);
+        await handleEpubBuffer(epub);
         toast.add({
           type: "success",
           title: "Epub parsed successfully"

@@ -9,11 +9,13 @@ type ParsedState = {
   metadata?: Metadata;
   chapters?: ChapterList;
   isParsed: boolean;
+  epubBuffer?: ArrayBuffer;
 }
 
 type ParsedAction = {
   handleMetadata: (metadata?: Metadata) => void;
   handleChapters: (novel?: ChapterList) => void;
+  handleEpubBuffer: (epub: File) => Promise<void>;
 }
 
 const { ContextProvider, useContext } = createContext<ParsedState & ParsedAction>();
@@ -21,8 +23,13 @@ const { ContextProvider, useContext } = createContext<ParsedState & ParsedAction
 export const ParserProvider = ({ children }: PropsWithChildren) => {
   const [metadata, setMetadata] = useState<Metadata | undefined>();
   const [chapters, setChapters] = useState<ChapterList | undefined>();
+  const [epubBuffer, setEpubBuffer] = useState<ArrayBuffer | undefined>();
 
-  const isParsed = !!chapters;
+  const isParsed = !!chapters && !!epubBuffer;
+
+  const handleEpubBuffer = async (epub: File) => {
+    setEpubBuffer(await epub.arrayBuffer());
+  }
 
   const handleChapters = (chapters?: ChapterList) => {
     setChapters(chapters);
@@ -37,6 +44,8 @@ export const ParserProvider = ({ children }: PropsWithChildren) => {
       isParsed,
       metadata,
       chapters,
+      epubBuffer,
+      handleEpubBuffer,
       handleMetadata,
       handleChapters,
     }}>
