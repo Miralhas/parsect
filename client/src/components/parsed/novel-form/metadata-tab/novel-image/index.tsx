@@ -1,47 +1,60 @@
-import type { Metadata } from "@/types/metadata";
-import { ImageIcon } from "lucide-react";
+import { useParserProvider } from "@/contexts/parser-context";
+import { processImageCover } from "@/lib/utils/image-utils";
+import { CameraIcon, ImageOffIcon } from "lucide-react";
+import { useMemo, useRef, useState, type ChangeEvent } from "react";
 
-type Props = {
-  b64?: Metadata["image_b64"],
-  handleBlob: (blob: Blob | null) => void
-}
+const NovelImage = () => {
+  const { cover, handleCover } = useParserProvider();
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
-const NovelImage = ({ b64, handleBlob }: Props) => {
+  const imgSrc = useMemo(() => {
+    if (!cover) return undefined;
+    return URL.createObjectURL(cover);
+  }, [cover]);
 
-  const handleCover = async (image: HTMLImageElement) => {
-    if (!image.complete || image.naturalWidth === 0) {
-      return;
+  const handleChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const file = e.target.files?.[0];
+    if (file) {
+      setLoaded(false);
+      handleCover(file);
     }
+  }
 
-    const offscreen = new OffscreenCanvas(
-      image.naturalWidth,
-      image.naturalHeight
-    );
-
-    const ctx = offscreen.getContext("2d");
-
-    if (!ctx) {
-      throw new Error("No 2d context");
-    }
-
-    ctx.drawImage(image, 0, 0);
-
-    const blob = await offscreen.convertToBlob({
-      type: "image/webp",
-      quality: 0.75,
-    });
-
-    handleBlob(blob);
-  };
+  const handleLoad = async (image: HTMLImageElement) => {
+    const blob = await processImageCover(image);
+    handleCover(blob);
+    setLoaded(true);
+  }
 
   return (
-    <div className="w-22 h-[132px] border relative flex items-center justify-center">
-      <ImageIcon className="absolute z-[1] text-muted-foreground" />
-      <img
-        className="object-cover w-full h-full absolute inset-0 z-10"
-        src={`data:image/*;base64,${b64}`}
-        onLoad={(e) => handleCover(e.currentTarget)}
+    <div
+      className="w-22 h-[132px] border relative cursor-pointer group transition-all"
+      onClick={() => imageInputRef?.current?.click()}
+    >
+      {!cover ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <ImageOffIcon className="text-muted-foreground transition-opacity duration-300 group-hover:opacity-0 opacity-100" />
+        </div>
+      ) : (
+        <img
+          className="object-cover w-full h-full absolute inset-0"
+          src={imgSrc}
+          onLoad={async (e) => !loaded ? handleLoad(e.currentTarget) : null}
+        />
+      )}
+      <input
+        type="file"
+        accept="image/*"
+        className="absolute -top-999"
+        ref={imageInputRef}
+        onChange={handleChange}
       />
+      <div className="absolute inset-0 z-50 transition-opacity duration-300 opacity-0 group-hover:opacity-100 bg-black/70 grid place-items-center">
+        <CameraIcon className="text-foreground/70" />
+      </div>
     </div>
   )
 }

@@ -1,3 +1,8 @@
+export type Series = {
+  title: string;
+  slug: string;
+}
+
 export type NovelSummary = {
   id: number;
   slug: string;
@@ -13,4 +18,5 @@ export type NovelSummary = {
   updatedAt: string;
   views: number;
   bayesianScore: number;
+  series: Series | null;
 };

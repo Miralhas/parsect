@@ -18,13 +18,14 @@ import { toast } from "@/components/ui/toast";
 import { useParserProvider } from "@/contexts/parser-context";
 import { MetadataSchema, SOURCES, type MetadataInput } from "@/lib/schemas/metadata-schema";
 import { isApiError } from "@/lib/utils/common-utils";
+import { b64ToBlob } from "@/lib/utils/image-utils";
 import { useMetadataExtractor } from "@/service/epub/mutations/use-metadata-extractor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 
 const MetadataForm = () => {
   const mutation = useMetadataExtractor();
-  const { handleMetadata } = useParserProvider();
+  const { handleMetadata, handleCover } = useParserProvider();
 
   const form = useForm<MetadataInput>({
     resolver: zodResolver(MetadataSchema),
@@ -36,8 +37,9 @@ const MetadataForm = () => {
 
   const onSubmit = (input: MetadataInput) => {
     mutation.mutate(input, {
-      onSuccess: (metadata) => {
+      onSuccess: async (metadata) => {
         handleMetadata(metadata);
+        handleCover(await b64ToBlob(metadata.image_b64));
         toast.add({
           type: "success",
           title: "Metadata extracted successfully"

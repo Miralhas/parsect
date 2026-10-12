@@ -18,5 +18,9 @@ export const extractMetadata = async (input: MetadataInput): Promise<Metadata> =
     throw new ApiError(data);
   }
 
-  return res.json() as Promise<Metadata>;
+  const json = await res.json()
+
+  console.log(json)
+
+  return json;
 }

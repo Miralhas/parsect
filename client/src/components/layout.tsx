@@ -7,12 +7,12 @@ type Props = {
 }
 
 const Layout = ({ children, className }: PropsWithChildren<Props>) => {
-  const { handleChapters } = useParserProvider();
+  const { handleClear } = useParserProvider();
 
   const handleHome = (e: MouseEvent<HTMLAnchorElement, globalThis.MouseEvent>) => {
     e.preventDefault();
     e.stopPropagation();
-    handleChapters()
+    handleClear()
   }
 
   return (

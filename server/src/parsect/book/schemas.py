@@ -5,6 +5,7 @@ class Book(BaseModel):
     title: str = Field(min_length=1) 
     description: str = Field(min_length=1) 
     alias: str | None = Field(default=None)
+    series: str | None = Field(default=None)
     author: str = Field(min_length=1) 
     genres: list[str] = Field(min_length=1) 
     tags: list[str] = Field(min_length=1) 

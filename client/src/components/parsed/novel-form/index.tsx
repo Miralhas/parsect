@@ -25,6 +25,7 @@ export const toDefault = (
   metadata?: Omit<Metadata, 'image_b64'>,
 ): NovelFormInput => {
   return {
+    series: metadata?.series ?? "",
     title: metadata?.title ?? "",
     alias: metadata?.alias ?? "",
     author: metadata?.author ?? "",
@@ -37,8 +38,7 @@ export const toDefault = (
 }
 
 const NovelForm = () => {
-  const { chapters, metadata } = useParserProvider();
-  const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
+  const { chapters, metadata, cover } = useParserProvider();
   const [tab, setTab] = useState<'metadata' | 'chapters' | 'reader'>('chapters');
   const coverMutation = useCoverUploader();
   const bookMutation = useBookUploader();
@@ -47,10 +47,6 @@ const NovelForm = () => {
     resolver: zodResolver(NovelSchema),
     defaultValues: toDefault(chapters, metadata),
   });
-
-  const handleBlob = (blob: Blob | null) => {
-    setCoverBlob(blob);
-  }
 
   const onError = (errors: typeof form.formState.errors) => {
     const { chapters: chapterErrors, ...rest } = errors;
@@ -67,14 +63,15 @@ const NovelForm = () => {
       description: <SuccessDescription novel={novel} />,
       timeout: 0,
     });
-    if (coverBlob) {
+    if (cover) {
       const formData = new FormData();
-      formData.append("file", coverBlob!, `${novel.slug}-cover.webp`);
+      formData.append("file", cover, `${novel.slug}-cover.webp`);
       coverMutation.mutate({ formData, slug: novel.slug }, {
-        onError: () => {
+        onError: (error) => {
           toast.add({
             type: 'error',
-            title: "Failed to upload book cover!"
+            title: "Failed to upload book cover!",
+            description: isApiError(error) ? error.detail : error.message,
           })
         }
       })
@@ -107,7 +104,6 @@ const NovelForm = () => {
     });
   }
 
-
   const isPending = bookMutation.isPending || coverMutation.isPending;
 
   return (
@@ -124,7 +120,6 @@ const NovelForm = () => {
               <MetadataTabForm
                 form={form}
                 metadata={metadata}
-                handleBlob={handleBlob}
                 isPending={isPending}
               />
             </TabsContent>

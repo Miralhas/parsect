@@ -13,6 +13,10 @@ export const NovelSchema = z.object({
     .min(2, { error: "Alias should have at least 2 character" })
     .optional()
     .or(z.literal('')).transform(val => val === "" ? undefined : val),
+  series: z
+    .string()
+    .optional()
+    .or(z.literal('')).transform(val => val === "" ? undefined : val),
   author: z
     .string()
     .min(1, {

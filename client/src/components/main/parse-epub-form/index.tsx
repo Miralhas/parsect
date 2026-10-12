@@ -36,11 +36,11 @@ const ParseEpubForm = () => {
     mutation.mutate(formData, {
       onSuccess: async (chapters) => {
         handleChapters(chapters);
-        await handleEpubBuffer(epub);
         toast.add({
           type: "success",
           title: "Epub parsed successfully"
         });
+        handleEpubBuffer(epub);
       },
       onError: (err) => {
         const description = isApiError(err) ? err.detail : err.message;

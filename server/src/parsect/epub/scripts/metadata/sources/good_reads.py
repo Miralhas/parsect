@@ -75,6 +75,8 @@ class GoodReadsSource(AbstractSource):
             image_b64 = image_fallback.screenshot_as_base64
 
             alias = None
+            series = None
+            
             try:
                 show_all_genres_btn = driver.find_element(By.CSS_SELECTOR, "div.BookPageMetadataSection__genres div.Button__container button")
                 show_all_genres_btn.click()
@@ -96,7 +98,10 @@ class GoodReadsSource(AbstractSource):
             status = "COMPLETED"
 
             try:
-                alias = driver.find_element(By.CSS_SELECTOR, "div.BookPageTitleSection__title h3").text
+                alias_element = driver.find_element(By.CSS_SELECTOR, "div.BookPageTitleSection__title a")
+                alias = alias_element.text
+                series_href = alias_element.get_attribute("href")
+                series = "-".join(series_href.split("/")[-1].split("-")[1:])
             except NoSuchElementException as e:
                 pass
 
@@ -115,6 +120,7 @@ class GoodReadsSource(AbstractSource):
                     "description": self.clean_html(description),
                     "genres_and_tags": genres_and_tags,
                     "alias": alias,
+                    "series": series,
                     "image_b64": image_b64
                 }
             )

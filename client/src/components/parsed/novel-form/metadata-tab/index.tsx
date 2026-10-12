@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldContent,
@@ -15,10 +14,11 @@ import {
   InputGroupInput
 } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
+import { useParserProvider } from "@/contexts/parser-context";
 import { type NovelFormInput, type NovelInput } from "@/lib/schemas/novel-schema";
 import type { Metadata } from "@/types/metadata";
 import { XIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { Controller, useFieldArray, type UseFormReturn } from "react-hook-form";
 import { toDefault } from "..";
 import NovelImage from "./novel-image";
@@ -26,13 +26,13 @@ import NovelImage from "./novel-image";
 type Props = {
   form: UseFormReturn<NovelFormInput, unknown, NovelInput>;
   isPending: boolean;
-  handleBlob: (blob: Blob | null) => void;
-  metadata?: Metadata
+  metadata?: Metadata;
 }
 
 const initialMetadata: Omit<NovelInput, "chapters"> = {
   title: "",
   alias: "",
+  series: "",
   author: "",
   status: "COMPLETED",
   description: "",
@@ -40,12 +40,13 @@ const initialMetadata: Omit<NovelInput, "chapters"> = {
   tags: [],
 }
 
-const MetadataTabForm = ({ form, isPending, metadata, handleBlob }: Props) => {
-  const [appendAlias, setAppendAlias] = useState<boolean>(false);
-
+const MetadataTabForm = ({ form, isPending, metadata }: Props) => {
+  const { handleCover } = useParserProvider();
+  
   const resetMetadata = () => {
     const chapters = form.getValues('chapters') as NovelInput["chapters"];
     form.reset(toDefault(chapters, initialMetadata));
+    handleCover(undefined);
   };
 
   const genresFieldArray = useFieldArray({
@@ -62,67 +63,71 @@ const MetadataTabForm = ({ form, isPending, metadata, handleBlob }: Props) => {
     if (!metadata) return;
     const chapters = form.getValues('chapters') as NovelInput["chapters"];
     form.reset(toDefault(chapters, metadata));
-    setAppendAlias(false);
   }, [form, metadata])
 
   useEffect(() => {
     if (!metadata) return;
-    // eslint-disable-next-line
     updateMetadata();
   }, [metadata, updateMetadata]);
-
-  const handleAppendAlias = (shouldAppend: boolean) => {
-    if (!metadata || (!metadata.alias && !metadata.title)) return;
-    const { alias } = form.getValues();
-    setAppendAlias(shouldAppend);
-    form.setValue('title', `${metadata.title}`)
-    if (shouldAppend && alias) {
-      form.setValue('title', `${metadata.title}: ${alias}`)
-    }
-  }
 
   return (
     <FieldSet className="gap-4">
       <FieldGroup className="gap-4">
         <div className="grid grid-cols-[0.1fr_1fr] gap-2">
           <div className="col-span-1">
-            <NovelImage handleBlob={handleBlob} b64={metadata?.image_b64} />
+            <NovelImage />
           </div>
           <div className="col-span-1 flex flex-col justify-between">
-            <Controller
-              name="title"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="gap-1">
-                  <div className="flex justify-between">
-                    <FieldLabel htmlFor="novel-form-title">
-                      Book title
-                    </FieldLabel>
-                    <div className="flex mb-0.25 gap-2 text-muted-foreground items-center">
-                      <FieldLabel htmlFor="append-alias" className="text-xs relative top-0.25">
-                        Append alias
+            <div className="grid grid-cols-[1fr_0.35fr] gap-2">
+              <Controller
+                name="title"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid} className="gap-1">
+                    <div className="flex justify-between">
+                      <FieldLabel htmlFor="novel-form-title">
+                        Book title
                       </FieldLabel>
-                      <Checkbox
-                        id="append-alias"
-                        checked={appendAlias}
-                        onCheckedChange={(b) => handleAppendAlias(b)}
-                      />
                     </div>
-                  </div>
-                  <Input
-                    {...field}
-                    id="novel-form-title"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Red Rising"
-                    autoComplete="off"
-                    disabled={isPending}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+                    <Input
+                      {...field}
+                      id="novel-form-title"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Red Rising"
+                      autoComplete="off"
+                      disabled={isPending}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="series"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid} className="gap-1">
+                    <div className="flex justify-between">
+                      <FieldLabel htmlFor="novel-form-series">
+                        Book series
+                      </FieldLabel>
+                    </div>
+                    <Input
+                      {...field}
+                      id="novel-form-series"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="red-rising-saga"
+                      autoComplete="off"
+                      disabled={isPending}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-2">
               <Controller

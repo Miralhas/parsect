@@ -11,4 +11,5 @@ export type Metadata = {
   tags: string[];
   genres: string[];
   image_b64: string;
+  series: string | undefined;
 }
